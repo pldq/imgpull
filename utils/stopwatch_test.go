@@ -10,6 +10,7 @@ func TestNewStopWatch(t *testing.T) {
 	sw := NewStopWatch()
 	if sw == nil {
 		t.Error("NewStopWatch() returned nil")
+		return
 	}
 	if len(sw.steps) != 0 {
 		t.Errorf("NewStopWatch() steps should be empty, got %d", len(sw.steps))

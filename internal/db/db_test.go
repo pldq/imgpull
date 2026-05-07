@@ -12,6 +12,7 @@ func TestOpen_Success(t *testing.T) {
 	}
 	if db == nil {
 		t.Error("Open() returned nil")
+		return
 	}
 	defer db.Close()
 }
