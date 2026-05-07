@@ -29,7 +29,9 @@ type Client interface {
 	DeleteBranch(ctx context.Context, branchName string) error
 	ListContainerPackages(ctx context.Context) ([]string, error)
 	DeleteContainerPackage(ctx context.Context, packageName string) error
+	PackageTagExists(ctx context.Context, packageName, tag string) (bool, error)
 	TriggerWorkflow(ctx context.Context, workflowName, branchName, tag string) (int64, error)
+	CancelWorkflowRun(ctx context.Context, runID int64) error
 	GetLatestWorkflowRunByBranch(ctx context.Context, workflowName, branchName string) (int64, error)
 	WaitForWorkflow(ctx context.Context, runID int64, callback WaitWorkFlowCallback) error
 	GetRepoOwner() string

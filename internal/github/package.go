@@ -47,3 +47,33 @@ func (g *Github) DeleteContainerPackage(ctx context.Context, packageName string)
 	}
 	return nil
 }
+
+// PackageTagExists checks if a specific tag exists in a container package
+func (g *Github) PackageTagExists(ctx context.Context, packageName, tag string) (bool, error) {
+	versions, _, err := pageGetAll(func(page int) ([]*gh.PackageVersion, *gh.Response, error) {
+		return g.client.Users.ListPackageVersions(ctx, container, url.PathEscape(packageName), &gh.ListPackageVersionsOptions{
+			ListOptions: gh.ListOptions{
+				PerPage: 100,
+				Page:    page,
+			},
+		})
+	})
+
+	if err != nil {
+		return false, fmt.Errorf("failed to list package versions: %w", err)
+	}
+
+	for _, v := range versions {
+		metadata, ok := v.GetMetadata()
+		if !ok || metadata.Container == nil {
+			continue
+		}
+		for _, t := range metadata.Container.Tags {
+			if t == tag {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}

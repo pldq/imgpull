@@ -83,6 +83,14 @@ func (g *Github) WaitForWorkflow(ctx context.Context, runID int64, callback Wait
 	}
 }
 
+func (g *Github) CancelWorkflowRun(ctx context.Context, runID int64) error {
+	response, err := g.client.Actions.CancelWorkflowRunByID(ctx, g.owner, g.repo, runID)
+	if response != nil && response.StatusCode == 202 {
+		return nil
+	}
+	return err
+}
+
 func mapWorkflowStatus(run *gh.WorkflowRun) WorkflowStatus {
 	switch run.GetStatus() {
 	case "queued", "pending":

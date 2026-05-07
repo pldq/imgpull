@@ -7,19 +7,22 @@ import (
 )
 
 func TestRetry_Do_Success(t *testing.T) {
-	retry := NewRetry(3)
+	retry := NewRetry[int](3)
 	attempts := 0
 
-	err := retry.Do(func() error {
+	result, err := retry.Do(func() (int, error) {
 		attempts++
 		if attempts < 2 {
-			return errors.New("not yet")
+			return 0, errors.New("not yet")
 		}
-		return nil
+		return 42, nil
 	})
 
 	if err != nil {
 		t.Errorf("Do() should succeed, got error: %v", err)
+	}
+	if result != 42 {
+		t.Errorf("Do() should return 42, got %d", result)
 	}
 	if attempts != 2 {
 		t.Errorf("should succeed on 2nd attempt, got %d attempts", attempts)
@@ -27,17 +30,20 @@ func TestRetry_Do_Success(t *testing.T) {
 }
 
 func TestRetry_Do_AllFail(t *testing.T) {
-	retry := NewRetry(3)
+	retry := NewRetry[int](3)
 	attempts := 0
 	testErr := errors.New("always fail")
 
-	err := retry.Do(func() error {
+	result, err := retry.Do(func() (int, error) {
 		attempts++
-		return testErr
+		return 0, testErr
 	})
 
 	if err != testErr {
 		t.Errorf("Do() should return last error, got: %v", err)
+	}
+	if result != 0 {
+		t.Errorf("Do() should return zero value on failure, got %d", result)
 	}
 	if attempts != 3 {
 		t.Errorf("should attempt 3 times, got %d attempts", attempts)
@@ -45,16 +51,19 @@ func TestRetry_Do_AllFail(t *testing.T) {
 }
 
 func TestRetry_Do_FirstSuccess(t *testing.T) {
-	retry := NewRetry(3)
+	retry := NewRetry[int](3)
 	attempts := 0
 
-	err := retry.Do(func() error {
+	result, err := retry.Do(func() (int, error) {
 		attempts++
-		return nil
+		return 42, nil
 	})
 
 	if err != nil {
 		t.Errorf("Do() should succeed immediately, got error: %v", err)
+	}
+	if result != 42 {
+		t.Errorf("Do() should return 42, got %d", result)
 	}
 	if attempts != 1 {
 		t.Errorf("should succeed on 1st attempt, got %d attempts", attempts)
@@ -62,25 +71,28 @@ func TestRetry_Do_FirstSuccess(t *testing.T) {
 }
 
 func TestRetry_Do_ZeroAttempts(t *testing.T) {
-	retry := NewRetry(0)
+	retry := NewRetry[int](0)
 
-	err := retry.Do(func() error {
-		return nil
+	result, err := retry.Do(func() (int, error) {
+		return 42, nil
 	})
 
 	if err == nil {
 		t.Error("Do() should error with zero maxAttempts")
 	}
+	if result != 0 {
+		t.Errorf("Do() should return zero value on error, got %d", result)
+	}
 }
 
 func TestRetry_BackoffTiming(t *testing.T) {
-	retry := NewRetry(4)
+	retry := NewRetry[int](4)
 	attempts := 0
 	start := time.Now()
 
-	retry.Do(func() error {
+	retry.Do(func() (int, error) {
 		attempts++
-		return errors.New("fail")
+		return 0, errors.New("fail")
 	})
 
 	elapsed := time.Since(start)

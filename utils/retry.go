@@ -6,28 +6,30 @@ import (
 )
 
 // Retry provides retry functionality with exponential backoff
-type Retry struct {
+type Retry[T any] struct {
 	maxAttempts int
 }
 
 // NewRetry creates a Retry instance
-func NewRetry(maxAttempts int) *Retry {
-	return &Retry{maxAttempts: maxAttempts}
+func NewRetry[T any](maxAttempts int) *Retry[T] {
+	return &Retry[T]{maxAttempts: maxAttempts}
 }
 
-// Do executes the function with retry logic
-// First attempt is immediate, subsequent attempts have exponential backoff:
+type Callable[T any] func() (T, error)
+
+// Do execute the function with retry logic
+// First attempt is immediate, subsequent attempts to have exponential backoff:
 // 500ms, 1s, 2s, 4s...
-func (r *Retry) Do(fn func() error) error {
+func (r *Retry[T]) Do(fn Callable[T]) (t T, err error) {
 	if r.maxAttempts <= 0 {
-		return errors.New("maxAttempts must be positive")
+		return t, errors.New("maxAttempts must be positive")
 	}
 
 	var lastErr error
 	for attempt := 1; attempt <= r.maxAttempts; attempt++ {
-		err := fn()
+		t, err = fn()
 		if err == nil {
-			return nil
+			return t, nil
 		}
 		lastErr = err
 
@@ -37,5 +39,5 @@ func (r *Retry) Do(fn func() error) error {
 		}
 	}
 
-	return lastErr
+	return t, lastErr
 }

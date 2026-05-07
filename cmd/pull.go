@@ -73,11 +73,11 @@ Examples:
 		sw := utils.NewStopWatch()
 
 		puller := &ImagePuller{
-			ctx:    ctx,
-			ref:    *ref,
-			force:  force,
-			gh:     githubClient,
-			docker: dockerClient,
+			ctx:      ctx,
+			ref:      *ref,
+			onlyPull: !force,
+			gh:       githubClient,
+			docker:   dockerClient,
 		}
 
 		if err := puller.Run(sw); err != nil {
@@ -109,24 +109,33 @@ func init() {
 type ImagePuller struct {
 	ctx          context.Context
 	ref          image.Reference
-	force        bool
+	onlyPull     bool
 	branchExists bool
 	gh           github.Client
 	docker       docker.Client
 }
 
 func (p *ImagePuller) Run(sw *utils.StopWatch) error {
+	// Check if package tag already exists (skip for latest tag)
+	tagExists := p.checkPackageTagExisted()
+
 	steps := []struct {
-		name string
-		fn   func() error
+		name        string
+		fn          func() error
+		skipOnExist bool // skip this step when package tag already exists
 	}{
-		{name: "Checking branch", fn: p.ensureBranch},
-		{name: "Running workflow", fn: p.runWorkflow},
+		{name: "Checking branch", fn: p.ensureBranch, skipOnExist: true},
+		{name: "Running workflow", fn: p.runWorkflow, skipOnExist: true},
 		{name: "Pulling image from ghcr.io", fn: p.pullImage},
 		{name: "Renaming image", fn: p.renameImage},
 	}
 
 	for i, step := range steps {
+		// Skip steps marked with skipOnTag if tag already exists
+		if tagExists && step.skipOnExist {
+			fmt.Printf("\n[%d/%d] %s... (skipped, tag already exists)\n", i+1, len(steps), step.name)
+			continue
+		}
 		fmt.Printf("\n[%d/%d] %s...\n", i+1, len(steps), step.name)
 		if err := sw.Run(step.name, step.fn); err != nil {
 			return err
@@ -136,6 +145,25 @@ func (p *ImagePuller) Run(sw *utils.StopWatch) error {
 	return nil
 }
 
+func (p *ImagePuller) checkPackageTagExisted() bool {
+	if p.ref.Tag == "latest" || !p.onlyPull {
+		return false
+	}
+
+	tagExists, err := p.gh.PackageTagExists(p.ctx, p.ref.BranchName(), p.ref.Tag)
+	if err != nil {
+		fmt.Printf("Warning: failed to check package tag: %v\n", err)
+		return false
+	}
+
+	if tagExists {
+		fmt.Printf("Package '%s' with tag '%s' already exists in ghcr.io\n", p.ref.BranchName(), p.ref.Tag)
+		return true
+	}
+
+	return false
+}
+
 func (p *ImagePuller) ensureBranch() (err error) {
 	p.branchExists, err = p.gh.BranchExists(p.ctx, p.ref.BranchName())
 	if err != nil {
@@ -143,51 +171,40 @@ func (p *ImagePuller) ensureBranch() (err error) {
 	}
 
 	if p.branchExists {
-		if p.force {
-			fmt.Printf("Branch '%s' exists, will force re-pull\n", p.ref.BranchName())
-		} else {
-			fmt.Printf("Branch '%s' already exists\n", p.ref.BranchName())
-		}
+		fmt.Printf("Branch '%s' already exists\n", p.ref.BranchName())
 		return nil
 	}
 
 	// Get last runID before creating branch (to exclude old workflow)
-	var lastRunID int64
-	if p.ref.Tag == "latest" {
-		lastRunID, _ = p.gh.GetLatestWorkflowRunByBranch(p.ctx, "trans-image.yml", p.ref.BranchName())
-	}
-
+	lastRunID, _ := p.gh.GetLatestWorkflowRunByBranch(p.ctx, "trans-image.yml", p.ref.BranchName())
 	fmt.Printf("Creating branch '%s'...\n", p.ref.BranchName())
 	if err := p.gh.CreateBranch(p.ctx, p.ref.BranchName()); err != nil {
 		return fmt.Errorf("failed to create branch: %w", err)
 	}
 	fmt.Printf("Branch '%s' created\n", p.ref.BranchName())
 
-	// New branch + latest tag: wait for auto-triggered trans-image.yml
-	if p.ref.Tag == "latest" {
-		retry := utils.NewRetry(10)
-		var newRunID int64
-		err := retry.Do(func() error {
-			runID, err := p.gh.GetLatestWorkflowRunByBranch(p.ctx, "trans-image.yml", p.ref.BranchName())
-			if err != nil {
-				return err
-			}
-			if runID <= lastRunID {
-				return errors.New("workflow not triggered yet")
-			}
-			newRunID = runID
-			return nil
-		})
+	retry := utils.NewRetry[int64](10)
+	newRunID, err := retry.Do(func() (int64, error) {
+		runID, err := p.gh.GetLatestWorkflowRunByBranch(p.ctx, "trans-image.yml", p.ref.BranchName())
 		if err != nil {
-			return fmt.Errorf("failed to get new workflow run ID: %w", err)
+			return 0, err
+		}
+		if runID <= lastRunID {
+			return 0, errors.New("workflow not triggered yet")
 		}
 
+		return runID, nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get new workflow run ID: %w", err)
+	}
+	if p.ref.Tag == "latest" {
 		fmt.Printf("Waiting for auto-triggered workflow: trans-image.yml (runID: %d)\r\n", newRunID)
-
 		return p.waitForWorkflow(newRunID)
 	}
 
-	return nil
+	fmt.Printf("Cancel for auto-triggered workflow: trans-image.yml (runID: %d)\r\n", newRunID)
+	return p.gh.CancelWorkflowRun(p.ctx, newRunID)
 }
 
 func (p *ImagePuller) runWorkflow() error {
