@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"testing"
 )
@@ -43,7 +44,7 @@ func TestConfig_Validate_NoToken(t *testing.T) {
 		GitHubRepo:  "owner/repo",
 	}
 	err := cfg.Validate()
-	if err != ErrGitHubTokenNotSet {
+	if !errors.Is(err, ErrGitHubTokenNotSet) {
 		t.Errorf("Validate() error: got %v, want %v", err, ErrGitHubTokenNotSet)
 	}
 }
@@ -54,7 +55,7 @@ func TestConfig_Validate_NoRepo(t *testing.T) {
 		GitHubRepo:  "",
 	}
 	err := cfg.Validate()
-	if err != ErrGitHubRepoNotSet {
+	if !errors.Is(err, ErrGitHubRepoNotSet) {
 		t.Errorf("Validate() error: got %v, want %v", err, ErrGitHubRepoNotSet)
 	}
 }

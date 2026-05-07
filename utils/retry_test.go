@@ -39,7 +39,7 @@ func TestRetry_Do_AllFail(t *testing.T) {
 		return 0, testErr
 	})
 
-	if err != testErr {
+	if !errors.Is(err, testErr) {
 		t.Errorf("Do() should return last error, got: %v", err)
 	}
 	if result != 0 {

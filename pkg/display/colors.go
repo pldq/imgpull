@@ -11,7 +11,6 @@ var (
 		return s
 	}
 
-	TimerColor   colorFunc = aec.BlueF.Apply
 	CountColor   colorFunc = aec.YellowF.Apply
 	WarningColor colorFunc = aec.YellowF.With(aec.Bold).Apply
 	SuccessColor colorFunc = aec.GreenF.Apply

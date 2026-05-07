@@ -185,10 +185,10 @@ func (w *ttyWriter) print() {
 	if terminalHeight <= 0 {
 		terminalHeight = 24
 	}
-	w.printWithDimensions(terminalWidth, terminalHeight)
+	w.printWithDimensions()
 }
 
-func (w *ttyWriter) printWithDimensions(terminalWidth, terminalHeight int) {
+func (w *ttyWriter) printWithDimensions() {
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
 	up := w.numLines
@@ -203,12 +203,12 @@ func (w *ttyWriter) printWithDimensions(terminalWidth, terminalHeight int) {
 	}()
 
 	line := w.prepareLineData(&w.task)
-	w.applyPadding(&line, terminalWidth, 0)
+	w.applyPadding(&line)
 	_, _ = fmt.Fprint(w.out, lineText(line))
 	w.numLines = 1
 }
 
-func (w *ttyWriter) applyPadding(l *lineData, terminalWidth int, timerLen int) {
+func (w *ttyWriter) applyPadding(l *lineData) {
 	// Width before statusPad: space(1) + spinner(1) + prefix + space(1) + taskID + progress
 	beforeStatus := 2 +
 		//lenAnsi(l.prefix) +

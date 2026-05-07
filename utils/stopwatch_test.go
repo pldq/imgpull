@@ -42,7 +42,7 @@ func TestStopWatch_Run_Error(t *testing.T) {
 	err := sw.Run("error-step", func() error {
 		return testErr
 	})
-	if err != testErr {
+	if !errors.Is(err, testErr) {
 		t.Errorf("Run() should return the function error, got %v", err)
 	}
 	if len(sw.steps) != 1 {
