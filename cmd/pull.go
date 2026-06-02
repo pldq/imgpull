@@ -275,6 +275,9 @@ func (p *ImagePuller) renameImage() error {
 	if err := p.docker.TagImage(p.ctx, ghcrRef, originalRef); err != nil {
 		return fmt.Errorf("failed to tag image: %w", err)
 	}
+	if err := p.docker.ImageRemove(p.ctx, ghcrRef); err != nil {
+		return fmt.Errorf("failed to untag image(%s): %w", ghcrRef, err)
+	}
 	fmt.Printf("Image renamed to: %s\n", originalRef)
 	return nil
 }

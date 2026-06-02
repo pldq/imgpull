@@ -44,3 +44,9 @@ func (c *CLIClient) GetImageSize(ctx context.Context, imageRef string) (int64, e
 	_, _ = fmt.Sscanf(sizeStr, "%d", &size)
 	return size, nil
 }
+
+func (c *CLIClient) ImageRemove(ctx context.Context, imageRef string) error {
+	cmd := exec.CommandContext(ctx, "docker", "rmi", imageRef)
+	_, err := cmd.CombinedOutput()
+	return err
+}

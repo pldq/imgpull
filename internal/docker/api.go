@@ -79,3 +79,8 @@ func (c *APIClient) GetImageSize(ctx context.Context, imageRef string) (int64, e
 	}
 	return images.Items[0].Size, nil
 }
+
+func (c *APIClient) ImageRemove(ctx context.Context, imageRef string) error {
+	_, err := c.cli.ImageRemove(ctx, imageRef, client.ImageRemoveOptions{})
+	return err
+}

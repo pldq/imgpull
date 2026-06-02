@@ -11,6 +11,7 @@ type Client interface {
 	PullImage(ctx context.Context, imageRef string) error
 	TagImage(ctx context.Context, sourceRef, targetRef string) error
 	GetImageSize(ctx context.Context, imageRef string) (int64, error)
+	ImageRemove(ctx context.Context, imageRef string) error
 }
 
 // NewClient creates a Docker client based on mode
