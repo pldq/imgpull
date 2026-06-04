@@ -83,12 +83,18 @@ func (r *Reference) GHCRName(githubUser string) string {
 
 // GHCRReference returns the full image reference in ghcr.io with tag
 func (r *Reference) GHCRReference(githubUser string) string {
+	if r.Registry == "ghcr.io" {
+		return r.String()
+	}
 	return fmt.Sprintf("%s:%s", r.GHCRName(githubUser), r.Tag)
 }
 
 // OriginalReference returns the original docker hub reference
 func (r *Reference) OriginalReference() string {
 	// Remove library/ prefix for display
+	if r.Registry == "ghcr.io" {
+		return r.String()
+	}
 	name := r.Name
 	if strings.HasPrefix(name, "library/") {
 		name = strings.TrimPrefix(name, "library/")

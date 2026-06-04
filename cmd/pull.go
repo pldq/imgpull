@@ -146,6 +146,11 @@ func (p *ImagePuller) Run(sw *utils.StopWatch) error {
 }
 
 func (p *ImagePuller) checkPackageTagExisted() bool {
+	// For ghcr.io images, skip workflow steps entirely
+	if p.ref.Registry == "ghcr.io" {
+		return true
+	}
+
 	if p.ref.Tag == "latest" || !p.onlyPull {
 		return false
 	}
@@ -271,6 +276,11 @@ func (p *ImagePuller) pullImage() error {
 func (p *ImagePuller) renameImage() error {
 	ghcrRef := p.ref.GHCRReference(p.gh.GetRepoOwner())
 	originalRef := p.ref.OriginalReference()
+
+	if ghcrRef == originalRef {
+		fmt.Printf("Image(%s) don't need rename, skip it.\n", ghcrRef)
+		return nil
+	}
 
 	if err := p.docker.TagImage(p.ctx, ghcrRef, originalRef); err != nil {
 		return fmt.Errorf("failed to tag image: %w", err)
