@@ -7,7 +7,7 @@ require (
 	github.com/buger/goterm v1.0.4
 	github.com/glebarez/sqlite v1.11.0
 	github.com/google/go-github/v85 v85.0.0
-	github.com/mattn/go-runewidth v0.0.23
+	github.com/mattn/go-runewidth v0.0.24
 	github.com/moby/moby/client v0.4.1
 	github.com/morikuni/aec v1.1.0
 	github.com/spf13/cobra v1.10.2
