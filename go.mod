@@ -11,7 +11,7 @@ require (
 	github.com/moby/moby/client v0.4.1
 	github.com/morikuni/aec v1.1.0
 	github.com/spf13/cobra v1.10.2
-	gorm.io/gorm v1.31.1
+	gorm.io/gorm v1.31.2
 )
 
 require (
