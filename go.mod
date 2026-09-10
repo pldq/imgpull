@@ -8,7 +8,7 @@ require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/google/go-github/v85 v85.0.0
 	github.com/mattn/go-runewidth v0.0.23
-	github.com/moby/moby/client v0.5.0
+	github.com/moby/moby/client v0.6.0
 	github.com/morikuni/aec v1.1.0
 	github.com/spf13/cobra v1.10.2
 	gorm.io/gorm v1.31.2
@@ -35,7 +35,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
-	github.com/moby/moby/api v1.55.0 // indirect
+	github.com/moby/moby/api v1.56.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
