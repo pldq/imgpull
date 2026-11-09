@@ -15,8 +15,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "imgpull",
-	Short: "Pull Docker images via GitHub Actions proxy",
+	Use:     "imgpull",
+	Version: Version,
+	Short:   "Pull Docker images via GitHub Actions proxy",
 	Long: `imgpull is a tool that helps you pull Docker images from Docker Hub
 through a GitHub Actions proxy. It creates branches in a GitHub repository,
 triggers workflows to pull and push images to ghcr.io, then pulls them locally.`,

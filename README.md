@@ -31,8 +31,36 @@ GitHub Token 和 Repo 继续使用环境变量，更安全。
 
 ## 安装
 
+### 从 Release 下载
+
+推送 `v*` 标签后，`Release` workflow 会自动构建并发布多平台成果物：
+
+| 平台      | 架构            | 文件                              |
+|---------|---------------|---------------------------------|
+| Linux   | amd64 / arm64 | `imgpull_linux_<arch>.tar.gz`   |
+| macOS   | amd64 / arm64 | `imgpull_darwin_<arch>.tar.gz`  |
+| Windows | amd64 / arm64 | `imgpull_windows_<arch>.zip`    |
+
+所有成果物的 SHA-256 校验和见 `SHA256SUMS.txt`。
+
+```bash
+# 推送标签即可触发构建与发布
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+也可以在 Actions 页面手动触发 `Release` workflow 并填写版本号。
+
+### 从源码构建
+
 ```bash
 go build -o imgpull.exe .
+```
+
+查看版本：
+
+```bash
+imgpull --version
 ```
 
 ## 使用
